@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Leaf, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navLinks = [{
@@ -33,8 +35,12 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost">Login</Button>
-            <Button>Sign Up</Button>
+            <Link to="/auth">
+              <Button variant="ghost">Login</Button>
+            </Link>
+            <Link to="/auth">
+              <Button>Sign Up</Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -50,8 +56,12 @@ const Header = () => {
                   {link.name}
                 </a>)}
               <div className="flex flex-col gap-2 mt-4">
-                <Button variant="ghost" className="w-full">Login</Button>
-                <Button className="w-full">Sign Up</Button>
+                <Link to="/auth" className="w-full">
+                  <Button variant="ghost" className="w-full">Login</Button>
+                </Link>
+                <Link to="/auth" className="w-full">
+                  <Button className="w-full">Sign Up</Button>
+                </Link>
               </div>
             </nav>
           </div>}
