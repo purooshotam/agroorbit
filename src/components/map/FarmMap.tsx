@@ -261,13 +261,29 @@ const FarmMap = () => {
     }
   }, [farms]);
 
+  const generateNDVIReading = async (farmId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-ndvi', {
+        body: { farm_id: farmId },
+      });
+
+      if (error) {
+        console.error('Error generating NDVI:', error);
+        return;
+      }
+
+      console.log('NDVI generated:', data);
+      toast({
+        title: 'NDVI Analysis Complete',
+        description: `Health status: ${data.reading?.health_status} (NDVI: ${data.reading?.ndvi_value})`,
+      });
+    } catch (error) {
+      console.error('Error calling generate-ndvi:', error);
+    }
+  };
+
   const handleSaveFarm = async (formData: FarmFormData) => {
-    console.log('handleSaveFarm called with:', formData);
-    console.log('user:', user);
-    console.log('selectedLocation:', selectedLocation);
-    
     if (!user) {
-      console.error('No user found');
       toast({
         title: 'Error',
         description: 'You must be logged in to add a farm',
@@ -277,7 +293,6 @@ const FarmMap = () => {
     }
     
     if (!selectedLocation) {
-      console.error('No location selected');
       toast({
         title: 'Error',
         description: 'No location selected',
@@ -296,8 +311,6 @@ const FarmMap = () => {
       crop_type: formData.crop_type || null,
       user_id: user.id,
     };
-    
-    console.log('Farm data to insert:', farmData);
 
     try {
       if (editingFarm) {
@@ -313,16 +326,23 @@ const FarmMap = () => {
           description: `${formData.name} has been updated successfully`,
         });
       } else {
-        const { error } = await supabase
+        const { data: newFarm, error } = await supabase
           .from('farms')
-          .insert(farmData);
+          .insert(farmData)
+          .select()
+          .single();
 
         if (error) throw error;
 
         toast({
           title: 'Farm Added',
-          description: `${formData.name} has been added to your farms`,
+          description: `${formData.name} has been added. Generating NDVI analysis...`,
         });
+
+        // Auto-generate NDVI reading for new farm
+        if (newFarm) {
+          generateNDVIReading(newFarm.id);
+        }
       }
 
       setIsDialogOpen(false);
