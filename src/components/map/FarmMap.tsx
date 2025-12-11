@@ -4,6 +4,8 @@ import 'leaflet/dist/leaflet.css';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Crosshair, Loader2 } from 'lucide-react';
 import FarmDialog from './FarmDialog';
 import FarmPopup from './FarmPopup';
 
@@ -37,6 +39,7 @@ const FarmMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markersLayer = useRef<L.LayerGroup | null>(null);
+  const userLocationMarker = useRef<L.Marker | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -45,6 +48,7 @@ const FarmMap = () => {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [editingFarm, setEditingFarm] = useState<Farm | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
 
   // Fetch farms
   const fetchFarms = async () => {
@@ -100,6 +104,91 @@ const FarmMap = () => {
       fetchFarms();
     }
   }, [user]);
+
+  // Get user's current location
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: 'Error',
+        description: 'Geolocation is not supported by your browser',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log('Got location:', latitude, longitude);
+
+        // Update user location marker
+        if (userLocationMarker.current) {
+          userLocationMarker.current.setLatLng([latitude, longitude]);
+        } else if (map.current) {
+          const userIcon = L.divIcon({
+            className: 'user-location-marker',
+            html: `<div style="
+              width: 20px;
+              height: 20px;
+              background: #3b82f6;
+              border: 3px solid white;
+              border-radius: 50%;
+              box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            "></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10],
+          });
+          userLocationMarker.current = L.marker([latitude, longitude], { icon: userIcon })
+            .addTo(map.current)
+            .bindPopup('Your location');
+        }
+
+        // Center map on user location
+        map.current?.setView([latitude, longitude], 15);
+
+        // Set selected location and open dialog to add farm
+        setSelectedLocation({ lat: latitude, lng: longitude });
+        setEditingFarm(null);
+        setIsDialogOpen(true);
+
+        setIsLocating(false);
+        toast({
+          title: 'Location Found',
+          description: 'Add a farm at your current location',
+        });
+      },
+      (error) => {
+        setIsLocating(false);
+        console.error('Geolocation error:', error);
+        
+        let errorMessage = 'Unable to get your location';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location permission denied. Please enable location access.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information unavailable';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out';
+            break;
+        }
+        
+        toast({
+          title: 'Location Error',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
 
   // Update markers when farms change
   useEffect(() => {
@@ -259,12 +348,30 @@ const FarmMap = () => {
       
       <div className="absolute top-4 left-4 z-[1000] bg-card/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-border">
         <h3 className="font-semibold text-foreground mb-1">Your Farms</h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground mb-3">
           {farms.length === 0 
             ? 'Click on the map to add a farm'
             : `${farms.length} farm${farms.length === 1 ? '' : 's'} registered`
           }
         </p>
+        <Button 
+          onClick={handleGetLocation} 
+          disabled={isLocating}
+          size="sm"
+          className="w-full"
+        >
+          {isLocating ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Getting Location...
+            </>
+          ) : (
+            <>
+              <Crosshair className="w-4 h-4 mr-2" />
+              Use My Location
+            </>
+          )}
+        </Button>
       </div>
 
       <FarmDialog
