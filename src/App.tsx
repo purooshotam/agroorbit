@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Advisor from "./pages/Advisor";
 import Analytics from "./pages/Analytics";
 import Map from "./pages/Map";
+import Alerts from "./pages/Alerts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/advisor" element={<Advisor />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/map" element={<Map />} />
+            <Route path="/alerts" element={<Alerts />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
