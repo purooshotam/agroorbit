@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Leaf, LogOut, Map, MessageSquare, Bell, TrendingUp, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import WeatherWidget from '@/components/dashboard/WeatherWidget';
 
 interface DashboardStats {
   farmCount: number;
@@ -297,6 +298,11 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Weather Widget */}
+        <div className="mb-8">
+          <WeatherWidget />
         </div>
 
         {/* Feature Cards */}
