@@ -1,19 +1,88 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Leaf, LogOut, Map, MessageSquare, Bell, TrendingUp, Loader2 } from 'lucide-react';
 
+interface DashboardStats {
+  farmCount: number;
+  avgNdvi: number | null;
+  alertCount: number;
+}
+
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [stats, setStats] = useState<DashboardStats>({
+    farmCount: 0,
+    avgNdvi: null,
+    alertCount: 0,
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
+
+  const fetchStats = async () => {
+    try {
+      // Fetch farm count
+      const { data: farms, error: farmsError } = await supabase
+        .from('farms')
+        .select('id')
+        .eq('user_id', user!.id);
+
+      if (farmsError) console.error('Error fetching farms:', farmsError);
+
+      // Fetch unread alerts count
+      const { data: alerts, error: alertsError } = await supabase
+        .from('alerts')
+        .select('id')
+        .eq('user_id', user!.id)
+        .eq('is_read', false);
+
+      if (alertsError) console.error('Error fetching alerts:', alertsError);
+
+      // Fetch average NDVI from recent readings
+      let avgNdvi: number | null = null;
+      if (farms && farms.length > 0) {
+        const farmIds = farms.map(f => f.id);
+        const { data: readings, error: readingsError } = await supabase
+          .from('ndvi_readings')
+          .select('ndvi_value')
+          .in('farm_id', farmIds)
+          .order('reading_date', { ascending: false })
+          .limit(10);
+
+        if (readingsError) {
+          console.error('Error fetching NDVI readings:', readingsError);
+        } else if (readings && readings.length > 0) {
+          const sum = readings.reduce((acc, r) => acc + r.ndvi_value, 0);
+          avgNdvi = sum / readings.length;
+        }
+      }
+
+      setStats({
+        farmCount: farms?.length || 0,
+        avgNdvi,
+        alertCount: alerts?.length || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -100,49 +169,61 @@ const Dashboard = () => {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card>
+          <Card className="cursor-pointer hover:shadow-card-hover transition-shadow" onClick={() => navigate('/map')}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Map className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-2xl font-bold">
+                    {loadingStats ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.farmCount}
+                  </p>
                   <p className="text-sm text-muted-foreground">Farms</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="cursor-pointer hover:shadow-card-hover transition-shadow" onClick={() => navigate('/analytics')}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-success" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">--</p>
+                  <p className="text-2xl font-bold">
+                    {loadingStats ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : stats.avgNdvi !== null ? (
+                      stats.avgNdvi.toFixed(2)
+                    ) : (
+                      '--'
+                    )}
+                  </p>
                   <p className="text-sm text-muted-foreground">Avg NDVI</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="cursor-pointer hover:shadow-card-hover transition-shadow" onClick={() => navigate('/alerts')}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
                   <Bell className="w-5 h-5 text-warning" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-2xl font-bold">
+                    {loadingStats ? <Loader2 className="w-5 h-5 animate-spin" /> : stats.alertCount}
+                  </p>
                   <p className="text-sm text-muted-foreground">Alerts</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="cursor-pointer hover:shadow-card-hover transition-shadow" onClick={() => navigate('/advisor')}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
