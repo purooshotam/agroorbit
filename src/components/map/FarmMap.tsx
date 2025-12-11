@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Crosshair, Loader2 } from 'lucide-react';
+import { Crosshair, Loader2, Layers, Map as MapIcon, Satellite } from 'lucide-react';
 import FarmDialog from './FarmDialog';
 import FarmPopup from './FarmPopup';
 
@@ -40,6 +40,8 @@ const FarmMap = () => {
   const map = useRef<L.Map | null>(null);
   const markersLayer = useRef<L.LayerGroup | null>(null);
   const userLocationMarker = useRef<L.Marker | null>(null);
+  const streetLayer = useRef<L.TileLayer | null>(null);
+  const satelliteLayer = useRef<L.TileLayer | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -49,6 +51,7 @@ const FarmMap = () => {
   const [editingFarm, setEditingFarm] = useState<Farm | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [isSatelliteView, setIsSatelliteView] = useState(false);
 
   // Fetch farms
   const fetchFarms = async () => {
@@ -78,10 +81,17 @@ const FarmMap = () => {
 
     map.current = L.map(mapContainer.current).setView([20, 0], 2);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Street layer (default)
+    streetLayer.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map.current);
+
+    // Satellite layer (Esri World Imagery)
+    satelliteLayer.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+      maxZoom: 19,
+    });
 
     markersLayer.current = L.layerGroup().addTo(map.current);
 
@@ -95,8 +105,24 @@ const FarmMap = () => {
     return () => {
       map.current?.remove();
       map.current = null;
+      streetLayer.current = null;
+      satelliteLayer.current = null;
     };
   }, []);
+
+  // Toggle satellite view
+  const toggleSatelliteView = () => {
+    if (!map.current || !streetLayer.current || !satelliteLayer.current) return;
+
+    if (isSatelliteView) {
+      map.current.removeLayer(satelliteLayer.current);
+      map.current.addLayer(streetLayer.current);
+    } else {
+      map.current.removeLayer(streetLayer.current);
+      map.current.addLayer(satelliteLayer.current);
+    }
+    setIsSatelliteView(!isSatelliteView);
+  };
 
   // Load farms
   useEffect(() => {
@@ -354,24 +380,40 @@ const FarmMap = () => {
             : `${farms.length} farm${farms.length === 1 ? '' : 's'} registered`
           }
         </p>
-        <Button 
-          onClick={handleGetLocation} 
-          disabled={isLocating}
-          size="sm"
-          className="w-full"
-        >
-          {isLocating ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Getting Location...
-            </>
-          ) : (
-            <>
-              <Crosshair className="w-4 h-4 mr-2" />
-              Use My Location
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleGetLocation} 
+            disabled={isLocating}
+            size="sm"
+            className="flex-1"
+          >
+            {isLocating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Crosshair className="w-4 h-4 mr-1" />
+                Location
+              </>
+            )}
+          </Button>
+          <Button 
+            onClick={toggleSatelliteView}
+            size="sm"
+            variant={isSatelliteView ? "default" : "outline"}
+          >
+            {isSatelliteView ? (
+              <>
+                <MapIcon className="w-4 h-4 mr-1" />
+                Map
+              </>
+            ) : (
+              <>
+                <Satellite className="w-4 h-4 mr-1" />
+                Satellite
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <FarmDialog
