@@ -239,7 +239,10 @@ const Dashboard = () => {
           <Card className="hover:shadow-card-hover transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div 
+                  className="flex items-center gap-3 flex-1 cursor-pointer"
+                  onClick={() => navigate('/analytics')}
+                >
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
                     <TrendingUp className="w-5 h-5 text-success" />
                   </div>
@@ -259,7 +262,10 @@ const Dashboard = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={refreshNdviReadings}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    refreshNdviReadings();
+                  }}
                   disabled={refreshingNdvi || stats.farmCount === 0}
                   title="Refresh NDVI readings"
                 >
