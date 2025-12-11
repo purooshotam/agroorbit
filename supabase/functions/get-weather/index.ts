@@ -6,6 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface DailyForecast {
+  date: string;
+  temp_max: number;
+  temp_min: number;
+  weather_code: number;
+  weather_description: string;
+  precipitation_sum: number;
+}
+
 interface WeatherData {
   farm_id: string;
   farm_name: string;
@@ -15,6 +24,7 @@ interface WeatherData {
   wind_speed: number;
   weather_code: number;
   weather_description: string;
+  forecast: DailyForecast[];
 }
 
 // Map WMO weather codes to descriptions
@@ -96,9 +106,9 @@ serve(async (req) => {
     // Fetch weather for each farm
     for (const farm of farms) {
       try {
-        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${farm.location_lat}&longitude=${farm.location_lng}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&timezone=auto`;
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${farm.location_lat}&longitude=${farm.location_lng}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum&timezone=auto&forecast_days=7`;
         
-        console.log(`Fetching weather for ${farm.name} at ${farm.location_lat}, ${farm.location_lng}`);
+        console.log(`Fetching weather for ${farm.name}`);
         
         const response = await fetch(weatherUrl);
         if (!response.ok) {
@@ -108,6 +118,20 @@ serve(async (req) => {
 
         const data = await response.json();
         const current = data.current;
+        const daily = data.daily;
+
+        // Build forecast array
+        const forecast: DailyForecast[] = [];
+        for (let i = 0; i < daily.time.length; i++) {
+          forecast.push({
+            date: daily.time[i],
+            temp_max: daily.temperature_2m_max[i],
+            temp_min: daily.temperature_2m_min[i],
+            weather_code: daily.weather_code[i],
+            weather_description: getWeatherDescription(daily.weather_code[i]),
+            precipitation_sum: daily.precipitation_sum[i],
+          });
+        }
 
         weatherData.push({
           farm_id: farm.id,
@@ -118,9 +142,10 @@ serve(async (req) => {
           wind_speed: current.wind_speed_10m,
           weather_code: current.weather_code,
           weather_description: getWeatherDescription(current.weather_code),
+          forecast,
         });
 
-        console.log(`Weather for ${farm.name}: ${current.temperature_2m}°C, ${getWeatherDescription(current.weather_code)}`);
+        console.log(`Weather for ${farm.name}: ${current.temperature_2m}°C, 7-day forecast loaded`);
       } catch (error) {
         console.error(`Error fetching weather for ${farm.name}:`, error);
       }
