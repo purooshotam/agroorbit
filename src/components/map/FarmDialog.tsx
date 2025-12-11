@@ -59,9 +59,7 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
     }
   }, [editingFarm, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleSubmit = () => {
     console.log('Form submitted with data:', formData);
     if (!formData.name.trim()) {
       console.log('Name is empty, not submitting');
@@ -141,7 +139,12 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !formData.name.trim()} className="flex-1">
+            <Button 
+              type="button" 
+              disabled={isLoading || !formData.name.trim()} 
+              className="flex-1"
+              onClick={handleSubmit}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
