@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Leaf, LogOut, Map, MessageSquare, Bell, TrendingUp, Loader2 } from 'lucide-react';
+import { Leaf, LogOut, Map, MessageSquare, Bell, TrendingUp, Loader2, RefreshCw } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface DashboardStats {
   farmCount: number;
@@ -21,6 +22,7 @@ const Dashboard = () => {
     alertCount: 0,
   });
   const [loadingStats, setLoadingStats] = useState(true);
+  const [refreshingNdvi, setRefreshingNdvi] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -81,6 +83,54 @@ const Dashboard = () => {
       console.error('Error fetching dashboard stats:', error);
     } finally {
       setLoadingStats(false);
+    }
+  };
+
+  const refreshNdviReadings = async () => {
+    setRefreshingNdvi(true);
+    try {
+      // Get all user's farms
+      const { data: farms, error: farmsError } = await supabase
+        .from('farms')
+        .select('id, name')
+        .eq('user_id', user!.id);
+
+      if (farmsError) throw farmsError;
+
+      if (!farms || farms.length === 0) {
+        toast({
+          title: 'No Farms',
+          description: 'Add farms first to generate NDVI readings',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Generate NDVI for each farm
+      let successCount = 0;
+      for (const farm of farms) {
+        const { error } = await supabase.functions.invoke('generate-ndvi', {
+          body: { farm_id: farm.id },
+        });
+        if (!error) successCount++;
+      }
+
+      toast({
+        title: 'NDVI Refresh Complete',
+        description: `Generated new readings for ${successCount} of ${farms.length} farms`,
+      });
+
+      // Refresh stats
+      await fetchStats();
+    } catch (error) {
+      console.error('Error refreshing NDVI:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to refresh NDVI readings',
+        variant: 'destructive',
+      });
+    } finally {
+      setRefreshingNdvi(false);
     }
   };
 
@@ -185,24 +235,35 @@ const Dashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="cursor-pointer hover:shadow-card-hover transition-shadow" onClick={() => navigate('/analytics')}>
+          <Card className="hover:shadow-card-hover transition-shadow">
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-success" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-success" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {loadingStats ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : stats.avgNdvi !== null ? (
+                        stats.avgNdvi.toFixed(2)
+                      ) : (
+                        '--'
+                      )}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Avg NDVI</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    {loadingStats ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : stats.avgNdvi !== null ? (
-                      stats.avgNdvi.toFixed(2)
-                    ) : (
-                      '--'
-                    )}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Avg NDVI</p>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={refreshNdviReadings}
+                  disabled={refreshingNdvi || stats.farmCount === 0}
+                  title="Refresh NDVI readings"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshingNdvi ? 'animate-spin' : ''}`} />
+                </Button>
               </div>
             </CardContent>
           </Card>
