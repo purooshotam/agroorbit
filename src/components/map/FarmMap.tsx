@@ -147,18 +147,42 @@ const FarmMap = () => {
   }, [farms]);
 
   const handleSaveFarm = async (formData: FarmFormData) => {
-    if (!user || !selectedLocation) return;
+    console.log('handleSaveFarm called with:', formData);
+    console.log('user:', user);
+    console.log('selectedLocation:', selectedLocation);
+    
+    if (!user) {
+      console.error('No user found');
+      toast({
+        title: 'Error',
+        description: 'You must be logged in to add a farm',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!selectedLocation) {
+      console.error('No location selected');
+      toast({
+        title: 'Error',
+        description: 'No location selected',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsLoading(true);
 
     const farmData = {
-      name: formData.name,
+      name: formData.name.trim(),
       location_lat: selectedLocation.lat,
       location_lng: selectedLocation.lng,
       area_hectares: formData.area_hectares ? parseFloat(formData.area_hectares) : null,
       crop_type: formData.crop_type || null,
       user_id: user.id,
     };
+    
+    console.log('Farm data to insert:', farmData);
 
     try {
       if (editingFarm) {

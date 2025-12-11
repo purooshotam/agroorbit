@@ -61,7 +61,13 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) return;
+    e.stopPropagation();
+    console.log('Form submitted with data:', formData);
+    if (!formData.name.trim()) {
+      console.log('Name is empty, not submitting');
+      return;
+    }
+    console.log('Calling onSave...');
     onSave(formData);
   };
 
