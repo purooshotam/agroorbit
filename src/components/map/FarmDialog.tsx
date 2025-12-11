@@ -45,10 +45,7 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
     crop_type: '',
   });
 
-  console.log('FarmDialog render - isOpen:', isOpen, 'location:', location);
-
   useEffect(() => {
-    console.log('FarmDialog useEffect - isOpen changed:', isOpen);
     if (isOpen) {
       if (editingFarm) {
         setFormData({
@@ -63,20 +60,14 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
           crop_type: '',
         });
       }
-      // Focus the name input after dialog opens
       setTimeout(() => {
-        console.log('Focusing name input');
         nameInputRef.current?.focus();
       }, 100);
     }
   }, [editingFarm, isOpen]);
 
   const handleSave = async () => {
-    console.log('=== handleSave clicked ===');
-    console.log('formData:', formData);
-    
     if (!formData.name.trim()) {
-      console.log('Name is empty, showing toast');
       toast({
         title: 'Name Required',
         description: 'Please enter a farm name',
@@ -86,12 +77,10 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
       return;
     }
     
-    console.log('Calling onSave with:', formData);
     try {
       await onSave(formData);
-      console.log('onSave completed');
     } catch (error) {
-      console.error('onSave error:', error);
+      console.error('Error saving farm:', error);
     }
   };
 
@@ -100,10 +89,7 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      console.log('Dialog onOpenChange:', open);
-      if (!open) onClose();
-    }}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[425px] z-[2000]">
         <DialogHeader>
           <DialogTitle>{editingFarm ? 'Edit Farm' : 'Add New Farm'}</DialogTitle>
@@ -131,10 +117,7 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
               ref={nameInputRef}
               id="farm-name"
               value={formData.name}
-              onChange={(e) => {
-                console.log('Name input changed:', e.target.value);
-                setFormData({ ...formData, name: e.target.value });
-              }}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Enter farm name (required)"
               autoComplete="off"
             />
@@ -144,10 +127,7 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
             <Label htmlFor="crop-type">Crop Type</Label>
             <Select
               value={formData.crop_type}
-              onValueChange={(value) => {
-                console.log('Crop type changed:', value);
-                setFormData({ ...formData, crop_type: value });
-              }}
+              onValueChange={(value) => setFormData({ ...formData, crop_type: value })}
             >
               <SelectTrigger id="crop-type">
                 <SelectValue placeholder="Select crop type (optional)" />
@@ -179,10 +159,7 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => {
-                console.log('Cancel clicked');
-                onClose();
-              }} 
+              onClick={onClose} 
               className="flex-1"
             >
               Cancel
@@ -191,10 +168,7 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
               type="button"
               disabled={isLoading}
               className="flex-1"
-              onClick={() => {
-                console.log('Add Farm button clicked');
-                handleSave();
-              }}
+              onClick={handleSave}
             >
               {isLoading ? (
                 <>
