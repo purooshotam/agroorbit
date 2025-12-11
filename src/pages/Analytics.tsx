@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Leaf, ArrowLeft, Loader2, TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts';
 import { format, subDays, parseISO } from 'date-fns';
@@ -12,6 +14,7 @@ import { format, subDays, parseISO } from 'date-fns';
 type Farm = {
   id: string;
   name: string;
+  crop_type: string | null;
 };
 
 type NdviReading = {
@@ -21,6 +24,12 @@ type NdviReading = {
   health_status: string;
   reading_date: string;
   satellite_source: string | null;
+};
+
+type FarmWithNdvi = Farm & {
+  latest_ndvi: number | null;
+  health_status: string | null;
+  reading_date: string | null;
 };
 
 const HEALTH_COLORS: Record<string, string> = {
@@ -61,7 +70,7 @@ const Analytics = () => {
   const fetchFarms = async () => {
     const { data, error } = await supabase
       .from('farms')
-      .select('id, name')
+      .select('id, name, crop_type')
       .order('name');
     
     if (!error && data) {
@@ -243,6 +252,81 @@ const Analytics = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Farm NDVI Table */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Farm NDVI Overview</CardTitle>
+            <CardDescription>Current NDVI readings for all your farms</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {farms.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No farms added yet</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Farm Name</TableHead>
+                    <TableHead>Crop Type</TableHead>
+                    <TableHead>Latest NDVI</TableHead>
+                    <TableHead>Health Status</TableHead>
+                    <TableHead>Last Updated</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {farms.map((farm) => {
+                    const farmReadings = readings.filter(r => r.farm_id === farm.id);
+                    const latestReading = farmReadings.length > 0 
+                      ? farmReadings.reduce((latest, r) => 
+                          new Date(r.reading_date) > new Date(latest.reading_date) ? r : latest
+                        )
+                      : null;
+                    
+                    const getStatusVariant = (status: string) => {
+                      switch (status.toLowerCase()) {
+                        case 'excellent': return 'default';
+                        case 'good': return 'secondary';
+                        case 'moderate': return 'outline';
+                        case 'poor': return 'destructive';
+                        case 'critical': return 'destructive';
+                        default: return 'outline';
+                      }
+                    };
+
+                    return (
+                      <TableRow key={farm.id}>
+                        <TableCell className="font-medium">{farm.name}</TableCell>
+                        <TableCell>{farm.crop_type || '--'}</TableCell>
+                        <TableCell>
+                          {latestReading ? (
+                            <span className="font-mono font-medium">
+                              {latestReading.ndvi_value.toFixed(2)}
+                            </span>
+                          ) : '--'}
+                        </TableCell>
+                        <TableCell>
+                          {latestReading ? (
+                            <Badge variant={getStatusVariant(latestReading.health_status)}>
+                              {latestReading.health_status}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">No Data</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {latestReading 
+                            ? format(parseISO(latestReading.reading_date), 'MMM d, yyyy')
+                            : '--'
+                          }
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
