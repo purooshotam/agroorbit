@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, MapPin } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import type { Farm } from './FarmMap';
 
 type FarmFormData = {
@@ -37,6 +38,7 @@ const CROP_TYPES = [
 ];
 
 const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location }: FarmDialogProps) => {
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<FarmFormData>({
     name: '',
     area_hectares: '',
@@ -44,28 +46,41 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
   });
 
   useEffect(() => {
-    if (editingFarm) {
-      setFormData({
-        name: editingFarm.name,
-        area_hectares: editingFarm.area_hectares?.toString() || '',
-        crop_type: editingFarm.crop_type || '',
-      });
-    } else {
-      setFormData({
-        name: '',
-        area_hectares: '',
-        crop_type: '',
-      });
+    if (isOpen) {
+      if (editingFarm) {
+        setFormData({
+          name: editingFarm.name,
+          area_hectares: editingFarm.area_hectares?.toString() || '',
+          crop_type: editingFarm.crop_type || '',
+        });
+      } else {
+        setFormData({
+          name: '',
+          area_hectares: '',
+          crop_type: '',
+        });
+      }
+      // Focus the name input after dialog opens
+      setTimeout(() => {
+        nameInputRef.current?.focus();
+      }, 100);
     }
   }, [editingFarm, isOpen]);
 
-  const handleSubmit = () => {
-    console.log('Form submitted with data:', formData);
+  const handleSave = () => {
+    console.log('handleSave called with:', formData);
+    
     if (!formData.name.trim()) {
-      console.log('Name is empty, not submitting');
+      toast({
+        title: 'Name Required',
+        description: 'Please enter a farm name',
+        variant: 'destructive',
+      });
+      nameInputRef.current?.focus();
       return;
     }
-    console.log('Calling onSave...');
+    
+    console.log('Calling onSave with:', formData);
     onSave(formData);
   };
 
@@ -82,7 +97,7 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <div className="space-y-4 mt-4">
           {location && (
             <div className="flex items-center gap-2 p-3 bg-muted rounded-lg text-sm">
               <MapPin className="w-4 h-4 text-primary" />
@@ -93,13 +108,14 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="name">Farm Name *</Label>
+            <Label htmlFor="name">Farm Name <span className="text-destructive">*</span></Label>
             <Input
+              ref={nameInputRef}
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., North Field"
-              required
+              placeholder="Enter farm name (required)"
+              autoFocus
             />
           </div>
 
@@ -110,7 +126,7 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
               onValueChange={(value) => setFormData({ ...formData, crop_type: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select crop type" />
+                <SelectValue placeholder="Select crop type (optional)" />
               </SelectTrigger>
               <SelectContent>
                 {CROP_TYPES.map((crop) => (
@@ -131,7 +147,7 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
               min="0"
               value={formData.area_hectares}
               onChange={(e) => setFormData({ ...formData, area_hectares: e.target.value })}
-              placeholder="e.g., 50"
+              placeholder="e.g., 50 (optional)"
             />
           </div>
 
@@ -140,10 +156,10 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
               Cancel
             </Button>
             <Button 
-              type="button" 
-              disabled={isLoading || !formData.name.trim()} 
+              type="button"
+              disabled={isLoading}
               className="flex-1"
-              onClick={handleSubmit}
+              onClick={handleSave}
             >
               {isLoading ? (
                 <>
@@ -155,7 +171,7 @@ const FarmDialog = ({ isOpen, onClose, onSave, editingFarm, isLoading, location 
               )}
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
