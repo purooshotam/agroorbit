@@ -1,7 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Satellite, Activity } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-farm-ndvi.jpg";
+
 const HeroSection = () => {
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    navigate("/auth");
+  };
+
+  const handleWatchDemo = () => {
+    const demoSection = document.getElementById("dashboard-preview");
+    if (demoSection) {
+      demoSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
   return <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30">
@@ -32,11 +46,11 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up" style={{
             animationDelay: "0.2s"
           }}>
-              <Button variant="hero" size="xl">
+              <Button variant="hero" size="xl" onClick={handleGetStarted}>
                 Get Started Free
                 <ArrowRight className="w-5 h-5" />
               </Button>
-              <Button variant="hero-outline" size="xl">
+              <Button variant="hero-outline" size="xl" onClick={handleWatchDemo}>
                 Watch Demo
               </Button>
             </div>
