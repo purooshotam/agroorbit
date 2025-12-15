@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Satellite, Activity } from "lucide-react";
 import heroImage from "@/assets/hero-farm-ndvi.jpg";
-
 const HeroSection = () => {
-  return (
-    <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
+  return <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
@@ -25,11 +23,15 @@ const HeroSection = () => {
               <span className="text-gradient">Satellite Data</span>
             </h1>
             
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-xl animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-xl animate-fade-in-up" style={{
+            animationDelay: "0.1s"
+          }}>
               Detect crop stress, water needs, and growth patterns early using advanced NDVI and moisture index analysis. Make smarter farming decisions with real-time satellite insights.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+            <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up" style={{
+            animationDelay: "0.2s"
+          }}>
               <Button variant="hero" size="xl">
                 Get Started Free
                 <ArrowRight className="w-5 h-5" />
@@ -40,9 +42,11 @@ const HeroSection = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-6 pt-8 border-t border-border animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+            <div className="grid grid-cols-3 gap-6 pt-8 border-t border-border animate-fade-in-up" style={{
+            animationDelay: "0.3s"
+          }}>
               <div>
-                <p className="text-2xl sm:text-3xl font-bold text-foreground">10K+</p>
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">500+</p>
                 <p className="text-sm text-muted-foreground">Farms Monitored</p>
               </div>
               <div>
@@ -57,13 +61,11 @@ const HeroSection = () => {
           </div>
 
           {/* Right Content - Hero Image */}
-          <div className="relative animate-scale-in" style={{ animationDelay: "0.2s" }}>
+          <div className="relative animate-scale-in" style={{
+          animationDelay: "0.2s"
+        }}>
             <div className="relative rounded-2xl overflow-hidden shadow-card-hover">
-              <img
-                src={heroImage}
-                alt="NDVI satellite map showing crop health visualization with green healthy areas and red stressed zones"
-                className="w-full h-auto object-cover"
-              />
+              <img src={heroImage} alt="NDVI satellite map showing crop health visualization with green healthy areas and red stressed zones" className="w-full h-auto object-cover" />
               {/* Floating Card */}
               <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-auto glass rounded-xl p-4 shadow-card animate-float">
                 <div className="flex items-center gap-3">
@@ -84,8 +86,6 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default HeroSection;
