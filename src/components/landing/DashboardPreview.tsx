@@ -3,7 +3,7 @@ import heroImage from "@/assets/hero-farm-ndvi.jpg";
 
 const DashboardPreview = () => {
   return (
-    <section className="relative overflow-hidden">
+    <section id="dashboard-preview" className="relative overflow-hidden">
       <div className="container-custom section-padding">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
