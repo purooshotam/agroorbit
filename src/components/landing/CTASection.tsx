@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Leaf } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const CTASection = () => {
+  const navigate = useNavigate();
   return (
     <section className="relative overflow-hidden">
       <div className="container-custom section-padding">
@@ -27,6 +29,7 @@ const CTASection = () => {
               <Button 
                 size="xl" 
                 className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 hover:scale-105 transition-all"
+                onClick={() => navigate('/auth')}
               >
                 Sign Up Free
                 <ArrowRight className="w-5 h-5" />
@@ -35,6 +38,7 @@ const CTASection = () => {
                 variant="hero-outline" 
                 size="xl"
                 className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+                onClick={() => navigate('/auth')}
               >
                 Login
               </Button>
