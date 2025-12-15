@@ -108,7 +108,7 @@ const HeroSection = () => {
             <iframe
               width="100%"
               height="100%"
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0"
+              src="https://www.youtube.com/embed/dVrPaw7TpMw?autoplay=0"
               title="AgriSense Demo Video"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
