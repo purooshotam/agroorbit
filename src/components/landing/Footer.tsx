@@ -38,7 +38,7 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
                 <Leaf className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">CropSense</span>
+              <span className="text-xl font-bold">Agro Orbit</span>
             </a>
             <p className="text-background/70 mb-6 max-w-sm">
               Empowering farmers with satellite-based crop monitoring technology. Make smarter decisions, grow healthier crops.
@@ -46,11 +46,11 @@ const Footer = () => {
             <div className="space-y-3 text-sm text-background/70">
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4" />
-                <span>support@cropsense.com</span>
+                <span>support@agroorbit.com</span>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4" />
-                <span>1-800-CROP-SEN</span>
+                <span>1-800-AGRO-ORB</span>
               </div>
               <div className="flex items-center gap-3">
                 <MapPin className="w-4 h-4" />
@@ -105,7 +105,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-background/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-background/60">
-            © {new Date().getFullYear()} CropSense. All rights reserved.
+            © {new Date().getFullYear()} Agro Orbit. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             {socialLinks.map((social) => (
