@@ -225,18 +225,46 @@ const FarmMap = () => {
     farms.forEach((farm) => {
       const marker = L.marker([farm.location_lat, farm.location_lng]);
       
+      // Create popup content using DOM methods to prevent XSS
       const popupContent = document.createElement('div');
-      popupContent.innerHTML = `
-        <div class="p-2 min-w-[200px]">
-          <h3 class="font-bold text-lg mb-1">${farm.name}</h3>
-          ${farm.crop_type ? `<p class="text-sm text-gray-600">Crop: ${farm.crop_type}</p>` : ''}
-          ${farm.area_hectares ? `<p class="text-sm text-gray-600">Area: ${farm.area_hectares} ha</p>` : ''}
-          <div class="flex gap-2 mt-3">
-            <button class="edit-btn px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">Edit</button>
-            <button class="delete-btn px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600">Delete</button>
-          </div>
-        </div>
-      `;
+      
+      const wrapper = document.createElement('div');
+      wrapper.className = 'p-2 min-w-[200px]';
+      
+      const title = document.createElement('h3');
+      title.className = 'font-bold text-lg mb-1';
+      title.textContent = farm.name; // Safe - uses textContent which escapes HTML
+      wrapper.appendChild(title);
+      
+      if (farm.crop_type) {
+        const cropP = document.createElement('p');
+        cropP.className = 'text-sm text-gray-600';
+        cropP.textContent = `Crop: ${farm.crop_type}`;
+        wrapper.appendChild(cropP);
+      }
+      
+      if (farm.area_hectares) {
+        const areaP = document.createElement('p');
+        areaP.className = 'text-sm text-gray-600';
+        areaP.textContent = `Area: ${farm.area_hectares} ha`;
+        wrapper.appendChild(areaP);
+      }
+      
+      const buttonContainer = document.createElement('div');
+      buttonContainer.className = 'flex gap-2 mt-3';
+      
+      const editBtn = document.createElement('button');
+      editBtn.className = 'edit-btn px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600';
+      editBtn.textContent = 'Edit';
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'delete-btn px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600';
+      deleteBtn.textContent = 'Delete';
+      
+      buttonContainer.appendChild(editBtn);
+      buttonContainer.appendChild(deleteBtn);
+      wrapper.appendChild(buttonContainer);
+      popupContent.appendChild(wrapper);
 
       popupContent.querySelector('.edit-btn')?.addEventListener('click', () => {
         setEditingFarm(farm);
