@@ -104,7 +104,7 @@ const Auth = () => {
     } else {
       toast({
         title: 'Account Created!',
-        description: 'Welcome to Agro Orbit. Redirecting to dashboard...'
+        description: 'Welcome to AgroOrbit. Redirecting to dashboard...'
       });
       navigate('/dashboard');
     }
@@ -208,7 +208,7 @@ const Auth = () => {
           <CardTitle className="text-2xl font-bold">
             {showForgotPassword 
               ? (showOtpVerification ? 'Verify OTP' : 'Reset Password')
-              : 'Welcome to Agro Orbit'
+              : 'Welcome to AgroOrbit'
             }
           </CardTitle>
           <CardDescription>
