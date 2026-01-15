@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -34,11 +35,17 @@ const CropAdvisor: React.FC = () => {
   }, [messages]);
 
   const streamChat = async (userMessages: Message[]) => {
+    // Get user session for authenticated requests
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error('Please log in to use CropAdvisor AI');
+    }
+
     const resp = await fetch(CHAT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({ messages: userMessages }),
     });
