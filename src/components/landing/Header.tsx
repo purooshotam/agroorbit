@@ -22,7 +22,7 @@ const Header = () => {
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center transition-transform group-hover:scale-110">
               <Leaf className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">Agro Orbit</span>
+            <span className="text-xl font-bold text-foreground">AgroOrbit</span>
           </a>
 
           {/* Desktop Navigation */}
