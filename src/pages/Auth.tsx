@@ -6,24 +6,28 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
-import { Leaf, Mail, Lock, User } from 'lucide-react';
+import { Leaf, Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
+
 const emailSchema = z.string().email('Invalid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const nameSchema = z.string().min(2, 'Name must be at least 2 characters');
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
   const [isLoading, setIsLoading] = useState(false);
-  const {
-    signIn,
-    signUp
-  } = useAuth();
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [otpValue, setOtpValue] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  
+  const { signIn, signUp, resetPassword, verifyOtpAndResetPassword } = useAuth();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -33,6 +37,7 @@ const Auth = () => {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupName, setSignupName] = useState('');
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -49,14 +54,14 @@ const Auth = () => {
       }
     }
     setIsLoading(true);
-    const {
-      error
-    } = await signIn(loginEmail, loginPassword);
+    const { error } = await signIn(loginEmail, loginPassword);
     setIsLoading(false);
     if (error) {
       toast({
         title: 'Login Failed',
-        description: error.message === 'Invalid login credentials' ? 'Invalid email or password. Please check your credentials.' : error.message,
+        description: error.message === 'Invalid login credentials' 
+          ? 'Invalid email or password. Please check your credentials.' 
+          : error.message,
         variant: 'destructive'
       });
     } else {
@@ -67,6 +72,7 @@ const Auth = () => {
       navigate('/dashboard');
     }
   };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -84,12 +90,12 @@ const Auth = () => {
       }
     }
     setIsLoading(true);
-    const {
-      error
-    } = await signUp(signupEmail, signupPassword, signupName);
+    const { error } = await signUp(signupEmail, signupPassword, signupName);
     setIsLoading(false);
     if (error) {
-      const errorMessage = error.message.includes('already registered') ? 'This email is already registered. Please login instead.' : error.message;
+      const errorMessage = error.message.includes('already registered') 
+        ? 'This email is already registered. Please login instead.' 
+        : error.message;
       toast({
         title: 'Signup Failed',
         description: errorMessage,
@@ -98,12 +104,98 @@ const Auth = () => {
     } else {
       toast({
         title: 'Account Created!',
-        description: 'Welcome to AgroOrbit. Redirecting to dashboard...'
+        description: 'Welcome to Agro Orbit. Redirecting to dashboard...'
       });
       navigate('/dashboard');
     }
   };
-  return <div className="min-h-screen bg-background flex items-center justify-center p-4">
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      emailSchema.parse(resetEmail);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: 'Validation Error',
+          description: error.errors[0].message,
+          variant: 'destructive'
+        });
+        return;
+      }
+    }
+    setIsLoading(true);
+    const { error } = await resetPassword(resetEmail);
+    setIsLoading(false);
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } else {
+      toast({
+        title: 'OTP Sent!',
+        description: 'Check your email for the verification code.'
+      });
+      setShowOtpVerification(true);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otpValue.length !== 6) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please enter the complete 6-digit code.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    try {
+      passwordSchema.parse(newPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: 'Validation Error',
+          description: error.errors[0].message,
+          variant: 'destructive'
+        });
+        return;
+      }
+    }
+    setIsLoading(true);
+    const { error } = await verifyOtpAndResetPassword(resetEmail, otpValue, newPassword);
+    setIsLoading(false);
+    if (error) {
+      toast({
+        title: 'Verification Failed',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } else {
+      toast({
+        title: 'Password Reset!',
+        description: 'Your password has been reset. Please login with your new password.'
+      });
+      setShowForgotPassword(false);
+      setShowOtpVerification(false);
+      setOtpValue('');
+      setResetEmail('');
+      setNewPassword('');
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false);
+    setShowOtpVerification(false);
+    setOtpValue('');
+    setResetEmail('');
+    setNewPassword('');
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-[url('/placeholder.svg')] bg-cover bg-center opacity-5" />
       
       <Card className="w-full max-w-md relative z-10 shadow-card">
@@ -113,77 +205,220 @@ const Auth = () => {
               <Leaf className="w-7 h-7 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome to CropSense</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            {showForgotPassword 
+              ? (showOtpVerification ? 'Verify OTP' : 'Reset Password')
+              : 'Welcome to Agro Orbit'
+            }
+          </CardTitle>
           <CardDescription>
-            Satellite-based crop monitoring for modern farming
+            {showForgotPassword 
+              ? (showOtpVerification 
+                  ? 'Enter the 6-digit code sent to your email' 
+                  : 'Enter your email to receive a reset code')
+              : 'Satellite-based crop monitoring for modern farming'
+            }
           </CardDescription>
         </CardHeader>
         
         <CardContent>
-          <Tabs defaultValue={defaultTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login" className="space-y-4 mt-4">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="login-email" type="email" placeholder="you@example.com" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="pl-10" required />
+          {showForgotPassword ? (
+            <div className="space-y-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleBackToLogin}
+                className="mb-2"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Login
+              </Button>
+              
+              {!showOtpVerification ? (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="reset-email" 
+                        type="email" 
+                        placeholder="you@example.com" 
+                        value={resetEmail} 
+                        onChange={(e) => setResetEmail(e.target.value)} 
+                        className="pl-10" 
+                        required 
+                      />
+                    </div>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="login-password" type="password" placeholder="••••••••" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="pl-10" required />
+                  
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Sending...' : 'Send Reset Code'}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Verification Code</Label>
+                    <div className="flex justify-center">
+                      <InputOTP 
+                        maxLength={6} 
+                        value={otpValue} 
+                        onChange={setOtpValue}
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
                   </div>
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Signing in...' : 'Sign In'}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup" className="space-y-4 mt-4">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="signup-name" type="text" placeholder="John Farmer" value={signupName} onChange={e => setSignupName(e.target.value)} className="pl-10" required />
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="new-password" 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={newPassword} 
+                        onChange={(e) => setNewPassword(e.target.value)} 
+                        className="pl-10" 
+                        required 
+                      />
+                    </div>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="signup-email" type="email" placeholder="you@example.com" value={signupEmail} onChange={e => setSignupEmail(e.target.value)} className="pl-10" required />
+                  
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Verifying...' : 'Reset Password'}
+                  </Button>
+                </form>
+              )}
+            </div>
+          ) : (
+            <Tabs defaultValue={defaultTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="login" className="space-y-4 mt-4">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="login-email" 
+                        type="email" 
+                        placeholder="you@example.com" 
+                        value={loginEmail} 
+                        onChange={(e) => setLoginEmail(e.target.value)} 
+                        className="pl-10" 
+                        required 
+                      />
+                    </div>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="signup-password" type="password" placeholder="••••••••" value={signupPassword} onChange={e => setSignupPassword(e.target.value)} className="pl-10" required />
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="login-password">Password</Label>
+                      <Button 
+                        type="button" 
+                        variant="link" 
+                        size="sm" 
+                        className="px-0 h-auto text-xs text-muted-foreground hover:text-primary"
+                        onClick={() => setShowForgotPassword(true)}
+                      >
+                        Forgot password?
+                      </Button>
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="login-password" 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={loginPassword} 
+                        onChange={(e) => setLoginPassword(e.target.value)} 
+                        className="pl-10" 
+                        required 
+                      />
+                    </div>
                   </div>
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Creating account...' : 'Create Account'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+                  
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Signing in...' : 'Sign In'}
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="signup" className="space-y-4 mt-4">
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">Full Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="signup-name" 
+                        type="text" 
+                        placeholder="John Farmer" 
+                        value={signupName} 
+                        onChange={(e) => setSignupName(e.target.value)} 
+                        className="pl-10" 
+                        required 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="signup-email" 
+                        type="email" 
+                        placeholder="you@example.com" 
+                        value={signupEmail} 
+                        onChange={(e) => setSignupEmail(e.target.value)} 
+                        className="pl-10" 
+                        required 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="signup-password" 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={signupPassword} 
+                        onChange={(e) => setSignupPassword(e.target.value)} 
+                        className="pl-10" 
+                        required 
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Creating account...' : 'Create Account'}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          )}
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default Auth;

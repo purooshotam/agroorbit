@@ -46,7 +46,7 @@ const BenefitsSection = () => {
           <p className="text-primary font-semibold mb-3">Benefits</p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-6">
             Why Farmers{" "}
-            <span className="text-gradient">Choose CropSense</span>
+            <span className="text-gradient">Choose Agro Orbit</span>
           </h2>
           <p className="text-lg text-muted-foreground">
             Join thousands of farmers who are already saving money and increasing yields with satellite monitoring.
